@@ -15,23 +15,27 @@ contract FundMe {
     // Could we make this constant?  /* hint: no! We should make it immutable! */
     address public /* immutable */ i_owner;
     uint256 public constant MINIMUM_USD = 50 * 10 ** 18;
+
+    AggregatorV3Interface public priceFeed;
     
-    constructor() {
+    constructor(address priceFeedAddress) {
+        // We refactored code so we can pass price feed address depending on the network we are on
         i_owner = msg.sender;
+        priceFeed = AggregatorV3Interface(priceFeedAddress);
     }
 
     function fund() public payable {
-        require(msg.value.getConversionRate() >= MINIMUM_USD, "You need to spend more ETH!");
+        require(msg.value.getConversionRate(priceFeed) >= MINIMUM_USD, "You need to spend more ETH!");
         // require(PriceConverter.getConversionRate(msg.value) >= MINIMUM_USD, "You need to spend more ETH!");
         addressToAmountFunded[msg.sender] += msg.value;
         funders.push(msg.sender);
     }
     
-    function getVersion() public view returns (uint256){
-        // ETH/USD price feed address of Goerli Network.
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
-        return priceFeed.version();
-    }
+    // function getVersion() public view returns (uint256){
+    //     // ETH/USD price feed address of Goerli Network.
+    //     AggregatorV3Interface priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
+    //     return priceFeed.version();
+    // }
     
     modifier onlyOwner {
         // require(msg.sender == owner);
