@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("hardhat-deploy");
+require("hardhat-gas-reporter");
 
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || "";
 const GOERLI_RPC_URL =
@@ -36,5 +37,12 @@ module.exports = {
     user: {
       default: 1,
     },
+  },
+  gasReporter: {
+    enabled: true,
+    currency: "USD",
+    outputFile: "gas-report.txt",
+    noColors: true,
+    // coinmarketcap: COINMARKETCAP_API_KEY,
   },
 };

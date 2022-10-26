@@ -21,7 +21,7 @@ describe("FundMe", async function () {
 
   describe("constructor", async function () {
     it("sets the aggregator addresses correctly", async () => {
-      const response = await fundMe.priceFeed();
+      const response = await fundMe.s_priceFeed();
       assert.equal(response, mockV3Aggregator.address);
     });
   });
@@ -38,12 +38,12 @@ describe("FundMe", async function () {
     // but this is good enough for now
     it("Updates the amount funded data structure", async () => {
       await fundMe.fund({ value: sendValue });
-      const response = await fundMe.addressToAmountFunded(deployer);
+      const response = await fundMe.s_addressToAmountFunded(deployer);
       assert.equal(response.toString(), sendValue.toString());
     });
     it("Adds funder to array of funders", async () => {
       await fundMe.fund({ value: sendValue });
-      const response = await fundMe.funders(0);
+      const response = await fundMe.s_funders(0);
       assert.equal(response, deployer);
     });
   });
@@ -122,13 +122,13 @@ describe("FundMe", async function () {
         endingDeployerBalance.add(withdrawGasCost).toString()
       );
       // Make a getter for storage variables
-      await expect(fundMe.funders(0)).to.be.reverted;
+      await expect(fundMe.s_funders(0)).to.be.reverted;
       // await expect(fundMe.getFunder(0)).to.be.reverted;
 
       // Check that accounts balance is 0
       for (i = 1; i < 6; i++) {
         assert.equal(
-          await fundMe.addressToAmountFunded(accounts[i].address),
+          await fundMe.s_addressToAmountFunded(accounts[i].address),
           0
         );
       }
@@ -146,6 +146,53 @@ describe("FundMe", async function () {
       // await expect(fundMeConnectedContract.withdraw()).to.be.revertedWith(
       //   "FundMe__NotOwner"
       // );
+    });
+
+    it("cheaperWithdraw testing...", async () => {
+      // Arrange
+      const accounts = await ethers.getSigners();
+      // loop through accounts and set each account to call fund function
+      for (i = 1; i < 6; i++) {
+        const fundMeConnectedContract = await fundMe.connect(accounts[i]);
+        await fundMeConnectedContract.fund({ value: sendValue });
+      }
+      const startingFundMeBalance = await fundMe.provider.getBalance(
+        fundMe.address
+      );
+      const startingDeployerBalance = await fundMe.provider.getBalance(
+        deployer
+      );
+
+      // Act
+      const transactionResponse = await fundMe.cheaperWithdraw();
+      // Let's compare gas costs :)
+      // const transactionResponse = await fundMe.withdraw();
+      const transactionReceipt = await transactionResponse.wait(1);
+      const { gasUsed, effectiveGasPrice } = transactionReceipt;
+      const withdrawGasCost = gasUsed.mul(effectiveGasPrice);
+      console.log(`GasCost: ${withdrawGasCost}`);
+      console.log(`GasUsed: ${gasUsed}`);
+      console.log(`GasPrice: ${effectiveGasPrice}`);
+      const endingFundMeBalance = await fundMe.provider.getBalance(
+        fundMe.address
+      );
+      const endingDeployerBalance = await fundMe.provider.getBalance(deployer);
+      // Assert
+      assert.equal(
+        startingFundMeBalance.add(startingDeployerBalance).toString(),
+        endingDeployerBalance.add(withdrawGasCost).toString()
+      );
+      // Make a getter for storage variables
+      await expect(fundMe.s_funders(0)).to.be.reverted;
+      // await expect(fundMe.getFunder(0)).to.be.reverted;
+
+      // Check that accounts balance is 0
+      for (i = 1; i < 6; i++) {
+        assert.equal(
+          await fundMe.s_addressToAmountFunded(accounts[i].address),
+          0
+        );
+      }
     });
   });
 });
