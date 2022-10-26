@@ -23,12 +23,13 @@ contract FundMe {
 
     // State Variables
     // append s_ to storage variables for which we know that will cost us a lot of gas
-    mapping(address => uint256) public s_addressToAmountFunded;
-    address[] public s_funders;
+    // changes in variables visibility can also save us some gas in the long run
+    mapping(address => uint256) private s_addressToAmountFunded;
+    address[] private s_funders;
 
     // Could we make this constant?  /* hint: no! We should make it immutable! */
     // non storage, immutable variables, should be prefixed with i_
-    address public /* immutable */ i_owner;
+    address private /* immutable */ i_owner;
     // use all upper case for constant values
     uint256 public constant MINIMUM_USD = 50 * 10 ** 18;
 
@@ -121,6 +122,25 @@ contract FundMe {
         s_funders = new address[](0);
         (bool success, ) = i_owner.call{value: address(this).balance}("");
         require(success);
+    }
+
+    // view / pure
+
+    // use getter functions as an api for anyone that wants to interact with out contract, so that they dont have to deal with the whole s_ variable names
+    function getOwner() public view returns(address){
+        return i_owner;
+    }
+
+    function getFunder(uint256 index) public view returns(address) {
+        return s_funders[index];
+    }
+
+    function getAddressToAmountFunded(address funder) public view returns(uint256) {
+        return s_addressToAmountFunded[funder];
+    }
+
+    function getPriceFeed() public view returns (AggregatorV3Interface) {
+        return s_priceFeed;
     }
 }
 
