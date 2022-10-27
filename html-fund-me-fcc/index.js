@@ -65,6 +65,7 @@ async function fund() {
       const transactionResponse = await contract.fund({
         value: ethers.utils.parseEther(ethAmount),
       });
+      // Wait for tx to finish
       await listenForTransactionMine(transactionResponse, provider);
     } catch (error) {
       console.log(error);
@@ -89,16 +90,23 @@ async function fund() {
 // }
 
 function listenForTransactionMine(transactionResponse, provider) {
+  // Show hash of response
   console.log(`Mining ${transactionResponse.hash}`);
+  // We are returning a promise, because we need to create a listener for the blockchain
+  // Without this promise the listenForTransactionMine function would finish without waiting for the provider.once() function to finish its execution
+  // We need the promise so the code runs in our desired order and doesn't skip ahead
   return new Promise((resolve, reject) => {
     try {
+      // once listens for an event one time
       provider.once(transactionResponse.hash, (transactionReceipt) => {
         console.log(
           `Completed with ${transactionReceipt.confirmations} confirmations. `
         );
+        // Resolve the promise
         resolve();
       });
     } catch (error) {
+      // Reject the promise
       reject(error);
     }
   });
