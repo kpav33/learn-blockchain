@@ -59,7 +59,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     // We want the entrance fee to be configurable so we set it up in the constructor
     // VRFConsumerBaseV2 need to pass it, this is the address of the contract that does the random number verification
     constructor(
-        address vrfCoordinatorV2,
+        address vrfCoordinatorV2, // contract address, will need to deploy some mocks
         uint256 entranceFee,
         bytes32 gasLane,
         uint64 subscriptionId,
