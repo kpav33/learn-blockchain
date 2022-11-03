@@ -19,6 +19,11 @@ error Raffle__TransferFailed();
 error Raffle__NotOpen();
 error Raffle__UpkeepNotNeeded(uint256 currentBalance, uint256 numPlayers, uint256 raffleState);
 
+/** @title A sample Raffle Contract
+ *  @author John Smith
+ *  @notice This contract is for creating an untamperable decentralize smart contract
+ *  @dev This implements Chainlink VRF v2 and Chainlink Keepers
+ */
 contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     /* Type Declarations */
     enum RaffleState {
@@ -40,7 +45,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
 
-    /* Lottery Variables */
+    // Lottery Variables
     address private s_recentWinner;
     RaffleState private s_raffleState;
     uint256 private s_lastTimeStamp;
@@ -50,6 +55,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     event RequestedRaffWinner(uint256 indexed requestId);
     event WinnerPicked(address indexed winner);
 
+    /* Functions */
     // We want the entrance fee to be configurable so we set it up in the constructor
     // VRFConsumerBaseV2 need to pass it, this is the address of the contract that does the random number verification
     constructor(
@@ -100,9 +106,9 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         bytes memory /*checkData*/
     )
         public
-        view
         override
         returns (
+            // view
             bool upkeepNeeded,
             bytes memory /* performData */
         )
@@ -118,9 +124,13 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         bool hasBalance = address(this).balance > 0;
         // If upkeepNeeded returns true its time to start a new lottery
         upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
-        return (upkeepNeeded, "0x0");
+        // return (upkeepNeeded, "0x0");
     }
 
+    /**
+     * @dev Once `checkUpkeep` is returning `true`, this function is called
+     * and it kicks off a Chainlink VRF call to get a random winner.
+     */
     // External functions are a bit cheaper, because Solidity knows the contract can't call them, can only be called from the "outside"
     // function requestRandomWinner() external {
     // Replace requestRandomWinner function with performUpkeep function from chainlink keepers
@@ -152,6 +162,10 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         emit RequestedRaffWinner(requestId);
     }
 
+    /**
+     * @dev This is the function that Chainlink VRF node
+     * calls to send the money to the random winner.
+     */
     // This function comes from chainlinks VRFConsumerBaseV2 contract, where it is marked as an virtual function, which means it expected to be overridden
     function fulfillRandomWords(
         uint256, /* requestId */ // We comment out the requestId, because we don't actually use it, but since we inherit the function from chainlink contract we have to keep it as parameter, despite not using it
@@ -181,6 +195,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     }
 
     /* View / Pure functions */
+    /** Getter Functions */
 
     // Show entrance fee value
     function getEntranceFee() public view returns (uint256) {
@@ -195,5 +210,29 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     // Return last winner address
     function getRecentWinner() public view returns (address) {
         return s_recentWinner;
+    }
+
+    function getRaffleState() public view returns (RaffleState) {
+        return s_raffleState;
+    }
+
+    function getNumWords() public pure returns (uint256) {
+        return NUM_WORDS;
+    }
+
+    function getNumberOfPlayers() public view returns (uint256) {
+        return s_players.length;
+    }
+
+    function getLastTimeStamp() public view returns (uint256) {
+        return s_lastTimeStamp;
+    }
+
+    function getRequestConfirmations() public pure returns (uint256) {
+        return REQUEST_CONFIRMATIONS;
+    }
+
+    function getInterval() public view returns (uint256) {
+        return i_interval;
     }
 }
