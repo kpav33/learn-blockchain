@@ -124,7 +124,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
         bool hasBalance = address(this).balance > 0;
         // If upkeepNeeded returns true its time to start a new lottery
         upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
-        // return (upkeepNeeded, "0x0");
+        return (upkeepNeeded, "0x0");
     }
 
     /**
